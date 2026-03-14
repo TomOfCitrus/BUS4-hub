@@ -5,11 +5,12 @@ body{
    -o-background-size: cover;
    background-size: cover;
    font-family:'HelveticaNeue','Arial', sans-serif;
+   background-color: #F5E6D3; /* Beige background */
 }
 
 /* Links */
-a { color:#8494FF; text-decoration: none; }
-a:hover { color:#FFDBFD; }
+a { color:#6B4F3A; text-decoration: none; }
+a:hover { color:#4B3621; }
 
 /* Utility classes */
 .pull-right { float: right; }
@@ -17,11 +18,15 @@ a:hover { color:#FFDBFD; }
 .clear-fix { clear:both; }
 
 /* Logo */
-div.logo { text-align: center; margin: 20px 20px 30px 20px; fill: #566375; }
+div.logo {
+  text-align: center;
+  margin: 20px 20px 30px 20px;
+  color: #FFFFFF;
+}
 
 /* Form wrapper overlay */
 #formWrapper{
-  background: rgba(0,0,0,.3);
+  background: rgba(75,54,33,.3); /* transparent brown overlay */
   width:100%;
   height:100%;
   position: absolute;
@@ -29,26 +34,34 @@ div.logo { text-align: center; margin: 20px 20px 30px 20px; fill: #566375; }
   left:0;
   transition:all .3s ease;
 }
-.darken-bg{background: rgba(0,0,0,.5) !important; transition:all .3s ease;}
+
+.darken-bg{
+  background: rgba(75,54,33,.5) !important;
+  transition:all .3s ease;
+}
 
 /* Form card */
 div#form{
   position: absolute;
   width:360px;
   height:auto;
-  background-color: #6367FF; /* Primary blue */
+  background-color: #6B4F3A; /* Brown card */
   margin:auto;
   border-radius: 20px;
   padding:40px;
   left:50%;
   top:50%;
   transform: translate(-50%, -50%);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
   color: white;
 }
 
 /* Each form field wrapper */
-div.form-item { position: relative; display: block; margin-bottom: 20px; }
+div.form-item {
+  position: relative;
+  display: block;
+  margin-bottom: 20px;
+}
 
 /* Input styling */
 input, select, textarea {
@@ -62,25 +75,31 @@ input, select, textarea {
 
 /* WTForms inputs */
 input.form-style{
-  color:#6367FF;
+  color:#4B3621;
   display: block;
   width: 90%;
   height: 44px;
   padding: 5px 5%;
-  border:1px solid #8494FF;
+  border:1px solid #6B4F3A;
   border-radius: 27px;
   background-clip: padding-box;
-  background-color: #C9BEFF; /* Lighter blue */
+  background-color: #E8D8C3; /* Light beige */
   font-family:'HelveticaNeue','Arial', sans-serif;
   font-size: 105%;
   letter-spacing: .8px;
   transition: all 0.3s ease;
 }
+
 div.form-item .form-style:focus{
   outline: none;
-  border:1px solid #6367FF;
-  color:#6367FF;
-  background-color:#FFDBFD; /* Accent on focus */
+  border:1px solid #4B3621;
+  color:#4B3621;
+  background-color:#FFFFFF; /* white focus */
+}
+
+.logo img{
+    width:120px;
+    margin-bottom:10px;
 }
 
 /* Submit button */
@@ -89,14 +108,15 @@ input[type="submit"].login{
   width: 112px;
   height: 37px;
   border-radius: 19px;
-  background-color: #8494FF; /* Button color */
+  background-color: #4B3621; /* dark brown */
   border:none;
   color: white;
   font-weight: bold;
   cursor: pointer;
   transition: 0.3s;
 }
+
 input[type="submit"].login:hover{
-  background-color: #FFDBFD; /* Button hover accent */
-  color:#6367FF;
+  background-color: #F5E6D3; /* beige hover */
+  color:#4B3621;
 }

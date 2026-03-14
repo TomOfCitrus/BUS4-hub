@@ -3,27 +3,44 @@
 {% block title %}Login{% endblock %}
 
 {% block content %}
+
 <div class="logo">
+    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Crosscheck Logo" width="120">
     <h2 style="color:white;">Crosscheck Login</h2>
 </div>
 
 <form method="POST">
     {{ form.hidden_tag() }}
 
-    <div class="form-item">
-        {{ form.email(class="form-style", placeholder="Email") }}
+```
+<!-- Validation Errors -->
+{% if form.errors %}
+    <div style="color:white; margin-bottom:10px;">
+        {% for field, errors in form.errors.items() %}
+            {% for error in errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        {% endfor %}
     </div>
+{% endif %}
 
-    <div class="form-item">
-        {{ form.password(class="form-style", placeholder="Password") }}
-    </div>
+<div class="form-item">
+    {{ form.email(class="form-style", placeholder="Email") }}
+</div>
 
-    {{ form.submit(class="login", value="Login") }}
+<div class="form-item">
+    {{ form.password(class="form-style", placeholder="Password") }}
+</div>
 
-    <div class="clear-fix"></div>
+{{ form.submit(class="login", value="Login") }}
+
+<div class="clear-fix"></div>
+```
+
 </form>
 
 <p style="color:white; margin-top:15px; text-align:center;">
     New here? <a href="{{ url_for('register') }}" style="color:white;">Register</a>
 </p>
+
 {% endblock %}
