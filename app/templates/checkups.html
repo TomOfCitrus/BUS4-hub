@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Log Check-up Details{% endblock %}
+
+{% block content %}
+    <a href="{{ url_for('index') }}">Back to Dashboard</a><br>
+    <h1>Check-up Log</h1>
+    <p>Please log the details from your patient check-ups here</p>
+
+    <form action="" method="POST" novalidate>
+        {{ form.hidden_tag() }}
+
+        <p>
+            {{ form.patient_last_name.label }}<br>
+            {{ form.patient_last_name }}<br>
+        </p>
+        <p>
+            {{ form.patient_first_name.label }}<br>
+            {{ form.patient_first_name }}<br>
+        </p>
+        <p>
+            {{ form.checkup_date.label }}<br>
+            {{ form.checkup_date }}<br>
+        </p>
+        <p>
+            {{ form.medication.label }}<br>
+            {{ form.medication }}<br>
+        </p>
+        <p>
+            {{ form.dosage.label }}<br>
+            {{ form.dosage }}<br>
+        </p>
+        <p>
+            {{ form.notes.label }}<br>
+            {{ form.notes }}<br>
+        </p>
+        <p> {{ form.submit }}</p>
+    </form>
+
+    {% if checkups %}
+        <h2>All Check-ups</h2>
+        <table border="1" cellpadding="5">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Date</th>
+                    <th>Prescribed Medication</th>
+                    <th>Details</th>
+                    <th>Update Check-up</th>
+                    <th>Delete Check-up</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for checkup in checkups %}
+                    <tr>
+                        <td>{{ checkup.patient_last_name }}, {{ checkup.patient_first_name }}</td>
+                        <td>{{ checkup.checkup_date }}</td>
+                        <td>{{ checkup.medication }}, {{ checkup.dosage }}</td>
+                        <td>{{ checkup.notes }}</td>
+                        <td>
+                            <a href="{{ url_for('update_checkup', checkup_id=checkup.checkup_id) }}">
+                                Update Check-up Details
+                            </a>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('delete_checkup', checkup_id=checkup.checkup_id) }}">
+                                Delete Check-up Details
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock %}

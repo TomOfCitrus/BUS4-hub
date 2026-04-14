@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Update Check-up Details{% endblock %}
+
+{% block content %}
+    <h1>Update Check-up Details</h1>
+    <form action="" method="POST" novalidate>
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.patient_last_name }}<br>
+        </p>
+        <p>
+            {{ form.patient_first_name }}<br>
+        </p>
+        <p>
+            {{ form.checkup_date }}<br>
+        </p>
+        <p>
+            {{ form.medication }}<br>
+        </p>
+        <p>
+            {{ form.dosage }}<br>
+        </p>
+        <p>
+            {{ form.notes }}<br>
+        </p>
+        <p>{{ form.submit }}</p>
+    </form>
+
+    <a href="{{ url_for('checkup') }}">Cancel Update</a>
+{% endblock %}
