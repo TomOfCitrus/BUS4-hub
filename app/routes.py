@@ -4,6 +4,7 @@ from app import app
 from app import db
 from app.forms import RegisterForm, LoginForm, PatientProfile, HealthLog, CheckupForm
 from app.models import User, PatientProfile, HealthRecord, Checkup
+from sqlalchemy.exc import IntegrityError
 
 #----------------------------------------------------------------------#
 @app.route('/', methods=['GET', 'POST'])
@@ -133,7 +134,21 @@ def get_health_data():
 
 # update health data
 def update_health_data():
-    pass
+    form = HealthLog()
+    if form.validate_on_submit():
+        data = HealthRecord()
+        form.populate_obj(data)
+        try:
+            db.session.add(data)
+            db.session.commit()
+            flash("Health data added!")
+            return redirect(url_for('index'))
+        except IntegrityError:         #modify this to other error in the future
+            db.session.rollback()
+            flash("Some error", "error")
+
+    return render_template('updateHealth.html',form=form)
+
 
 # delete health data, only on optional fields
 def delete_health_data():

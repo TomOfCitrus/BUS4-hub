@@ -19,8 +19,6 @@ class RegisterForm(FlaskForm):
         validators=[DataRequired()])
     submit = SubmitField("Register")
 
-    #
-
 #----------------------------------------------------------------------#
 
 class LoginForm(FlaskForm):
@@ -44,7 +42,7 @@ class PatientProfile(FlaskForm):
     vision_problems = BooleanField('Vision Problems')
     hearing_loss = BooleanField('Hearing Loss')
 
-    #allergies
+    # allergies
     allergies = TextAreaField('Allergies / Reactions', validators=[Optional()])
 
     # medication
