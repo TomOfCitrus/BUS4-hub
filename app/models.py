@@ -3,7 +3,7 @@ import sqlalchemy.orm as so
 from sqlalchemy.orm import relationship
 import sqlalchemy as sa
 from sqlalchemy import ForeignKey
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 #----------------------------------------------------------------------#
 
@@ -79,21 +79,23 @@ class HealthLog(db.Model):
 
 class Checkup(db.Model):
     __tablename__ = "checkups"
+    checkup_id: so.Mapped[int] = so.mapped_column(primary_key=True, nullable=False, index=True)
 
-    # foreign key
-    id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    patient_id: so.Mapped[int] = so.mapped_column(
-        sa.ForeignKey("patient_profiles.id"),
-        nullable=False)
-    gp_id: so.Mapped[int] = so.mapped_column(
-        sa.ForeignKey("users.id"),
-        nullable=False)
+    patient_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("patient_profiles.id"),nullable=False)
+    patient_last_name: so.Mapped[str] = so.mapped_column(sa.String(256), nullable=False, index=True)
+    patient_first_name: so.Mapped[str] = so.mapped_column(sa.String(256), nullable=False, index=True)
 
-    checkup_date: so.Mapped[date]
-    medication: so.Mapped[str]
-    dosage: so.Mapped[str]
-    notes: so.Mapped[str]
+    gp_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("users.id"), nullable=False)
 
-    # relationships
+    checkup_date: so.Mapped[datetime] = so.mapped_column(sa.DATE, nullable=False, default=lambda: datetime.now(timezone.utc))
+    medication: so.Mapped[str] = so.mapped_column(sa.String(256), nullable=False, index=True)
+    dosage: so.Mapped[str] = so.mapped_column(sa.String(256), nullable=False, index=True)
+    notes: so.Mapped[str] = so.mapped_column(sa.String(256), nullable=False, index=True)
+
+    #relationships
     patient = relationship("PatientProfile", back_populates="checkups")
     gp = relationship("User")
+
+    def __repr__(self):
+        return (f'<Checkup {self.checkup_id}, {self.patient_last_name}, {self.patient_first_name}, '
+                f'{self.checkup_date}, {self.medication}, {self.dosage}, {self.notes}>')

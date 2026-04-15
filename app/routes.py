@@ -2,8 +2,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask import render_template, redirect, url_for, flash, request, session
 from app import app
 from app import db
-from app.forms import RegisterForm, LoginForm, PatientProfile, HealthLog
-from app.models import User, PatientProfile, HealthLog, Checkup
+from app.forms import RegisterForm, LoginForm, PatientProfile, HealthLog, CheckupForm
+from app.models import User, PatientProfile, HealthRecord, Checkup
 
 #----------------------------------------------------------------------#
 @app.route('/', methods=['GET', 'POST'])
@@ -86,7 +86,7 @@ def login():
 #----------------------------------------------------------------------#
 
 @app.route('/logout')
-def logout():
+def logout_user():
     session.clear()
     flash("You have been logged out!")
     return redirect(url_for('login'))
@@ -139,4 +139,50 @@ def update_health_data():
 def delete_health_data():
     pass
 
-# COPY PASTE CHECKUP ROUTE FROM THOMAS FORK
+# send code to relative to verify that they can access patient information
+def verify_auth_code():
+    pass
+
+@app.route('/check_up', methods=['GET', 'POST'])
+def checkup():
+    form = CheckupForm()
+    if form.validate_on_submit():
+        checkup_log = Checkup(
+            patient_last_name=form.patient_last_name.data,
+            patient_first_name=form.patient_first_name.data,
+            checkup_date=form.checkup_date.data,
+            medication=form.medication.data,
+            dosage=form.dosage.data,
+            notes=form.notes.data
+        )
+        db.session.add(checkup_log)
+        db.session.commit()
+        flash(f"Check-up details have been successfully logged!")
+        return redirect(url_for('checkup'))
+    checkups = Checkup.query.all()
+    return render_template("checkups.html", form=form, checkups=checkups)
+
+@app.route('/update_check_up/<int:checkup_id>', methods=['GET', 'POST'])
+def update_checkup(checkup_id):
+    checkup_log = Checkup.query.get_or_404(checkup_id)
+    form = CheckupForm(obj=checkup_log)
+
+    if form.validate_on_submit():
+        checkup_log.patient_last_name = form.patient_last_name.data
+        checkup_log.patient_first_name = form.patient_first_name.data
+        checkup_log.checkup_date = form.checkup_date.data
+        checkup_log.medication = form.medication.data
+        checkup_log.dosage = form.dosage.data
+        checkup_log.notes = form.notes.data
+        db.session.commit()
+        flash(f'Check-up details have been updated successfully!')
+        return redirect(url_for('checkup'))
+    return render_template('checkups_updating.html', form=form)
+
+@app.route('/delete_check_up/<int:checkup_id>', methods=['GET', 'POST'])
+def delete_checkup(checkup_id):
+    checkup_log = Checkup.query.get_or_404(checkup_id)
+    db.session.delete(checkup_log)
+    db.session.commit()
+    flash(f'Check-up details have been deleted successfully.')
+    return redirect(url_for('checkup'))
