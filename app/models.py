@@ -51,6 +51,7 @@ class PatientProfile(db.Model):
     user = relationship("User")
     health_logs = relationship("HealthLog", back_populates="patient")
     checkups = relationship("Checkup", back_populates="patient")
+    approved_relatives = relationship("RelativeApproval", back_populates="patient", foreign_keys="RelativeApproval.patient_id")
 
 #----------------------------------------------------------------------#
 
@@ -99,3 +100,30 @@ class Checkup(db.Model):
     def __repr__(self):
         return (f'<Checkup {self.checkup_id}, {self.patient_last_name}, {self.patient_first_name}, '
                 f'{self.checkup_date}, {self.medication}, {self.dosage}, {self.notes}>')
+
+#----------------------------------------------------------------------#
+
+class RelativeApproval(db.Model):
+    __tablename__ = "relative_approvals"
+
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    patient_id: so.Mapped[int] = so.mapped_column(
+        sa.ForeignKey("patient_profiles.id"),
+        nullable=False,
+        index=True)
+    relative_id: so.Mapped[int] = so.mapped_column(
+        sa.ForeignKey("users.id"),
+        nullable=False,
+        index=True)
+
+    approved_at: so.Mapped[datetime] = so.mapped_column(
+        sa.DateTime,
+        default=datetime.utcnow,
+        nullable=False)
+
+    # relationships
+    patient = relationship("PatientProfile", back_populates="approved_relatives", foreign_keys=[patient_id])
+    relative = relationship("User")
+
+    def __repr__(self):
+        return f'<RelativeApproval Patient: {self.patient_id}, Relative: {self.relative_id}>'
