@@ -1,4 +1,5 @@
 from app import db
+from werkzeug.security import generate_password_hash, check_password_hash
 import sqlalchemy.orm as so
 from sqlalchemy.orm import relationship
 import sqlalchemy as sa
@@ -11,9 +12,18 @@ class User(db.Model):
     __tablename__ = "users"
 
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    first_name: so.Mapped[str] = so.mapped_column(nullable=False, index=True)
+    last_name: so.Mapped[str] = so.mapped_column(nullable=False, index=True)
+    date_of_birth: so.Mapped[datetime] = so.mapped_column(sa.DATE, nullable=False, index=True)
     email: so.Mapped[str] = so.mapped_column(unique=True, nullable=False, index=True)
-    password: so.Mapped[str] = so.mapped_column(nullable=False, index=True)
+    password_hash: so.Mapped[str] = so.mapped_column(sa.String(255), nullable=False)
     role: so.Mapped[str] = so.mapped_column(nullable=False, index=True)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
 #----------------------------------------------------------------------#
 

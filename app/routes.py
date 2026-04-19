@@ -32,13 +32,15 @@ def register():
             flash("Email already registered!")
             return render_template('register.html', form=form)
 
-        hashed_password = generate_password_hash(form.password.data)
-
         user = User(
+            first_name=form.first_name.data,
+            last_name=form.last_name.data,
+            date_of_birth=form.date_of_birth.data,
             email=form.email.data,
-            password=hashed_password,
             role=form.role.data,
         )
+
+        user.set_password(form.password.data)
 
         db.session.add(user)
         db.session.commit()
@@ -63,7 +65,7 @@ def login():
         email = form.email.data.lower()
         user = User.query.filter_by(email=email).first()
 
-        if user and check_password_hash(user.password, form.password.data):
+        if user and check_password_hash(user.password_hash, form.password.data):
             session.permanent = True
             session["user_id"] = user.id
             session["user_role"] = user.role
