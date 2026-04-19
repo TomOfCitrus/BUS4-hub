@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="manage-relatives-container">
+    <h1>Manage Trusted Relatives</h1>
+    <p>Approve trusted family or friends to access your health records.</p>
+
+    <section class="approve-relative-section">
+        <h2>Approve a New Relative</h2>
+        <form method="POST" action="{{ url_for('manage_relatives') }}">
+            {{ form.hidden_tag() }}
+
+            <div class="form-group">
+                {{ form.relative_email.label }}
+                {% if form.relative_email.errors %}
+                    {{ form.relative_email(class="form-control is-invalid") }}
+                    <div class="error-messages">
+                        {% for error in form.relative_email.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.relative_email(class="form-control", placeholder="Enter relative's email address") }}
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.relationship.label }}
+                {% if form.relationship.errors %}
+                    {{ form.relationship(class="form-control is-invalid") }}
+                    <div class="error-messages">
+                        {% for error in form.relationship.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.relationship(class="form-control", placeholder="e.g., spouse, child, parent, sibling") }}
+                {% endif %}
+            </div>
+
+            {{ form.submit(class="btn btn-primary") }}
+        </form>
+    </section>
+
+    <section class="approved-relatives-section">
+        <h2>Approved Relatives</h2>
+
+        {% if approved_relatives %}
+            <table class="relatives-table">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Approved Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for approval in approved_relatives %}
+                    <tr>
+                        <td>{{ approval.relative.email }}</td>
+                        <td>{{ approval.approved_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('revoke_relative', approval_id=approval.id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn-danger btn-small" onclick="return confirm('Are you sure you want to revoke this approval?');">Revoke</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="no-relatives">You have not approved any relatives yet. Approve a relative above to allow them to view your health records.</p>
+        {% endif %}
+    </section>
+
+    <div class="back-link">
+        <a href="{{ url_for('index') }}">Back to Home</a>
+    </div>
+</div>
+
+<style>
+.manage-relatives-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.manage-relatives-container h1 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.manage-relatives-container > p {
+    color: #666;
+    margin-bottom: 30px;
+}
+
+.approve-relative-section,
+.approved-relatives-section {
+    background-color: #f9f9f9;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.approve-relative-section h2,
+.approved-relatives-section h2 {
+    color: #333;
+    margin-top: 0;
+    font-size: 1.3em;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+.form-control {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545;
+}
+
+.error-messages {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.error {
+    display: block;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.relatives-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+}
+
+.relatives-table thead {
+    background-color: #f0f0f0;
+}
+
+.relatives-table th {
+    padding: 12px;
+    text-align: left;
+    font-weight: bold;
+    border-bottom: 2px solid #ddd;
+}
+
+.relatives-table td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+}
+
+.relatives-table tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+.no-relatives {
+    color: #666;
+    font-style: italic;
+    padding: 20px 0;
+}
+
+.back-link {
+    margin-top: 20px;
+}
+
+.back-link a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.back-link a:hover {
+    text-decoration: underline;
+}
+</style>
+{% endblock %}
+
