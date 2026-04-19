@@ -99,6 +99,13 @@ class HealthLog(FlaskForm):
         render_kw={"placeholder": "Anything else you'd like to record? (e.g. fall/injury)"})
     submit = SubmitField("Save Health Record")
 
+#----------------------------------------------------------------------#
+
+class RelativeApprovalForm(FlaskForm):
+    relative_email = StringField("Relative's Email:", validators=[DataRequired(), Length(min=8)])
+    relationship = StringField("Relationship (e.g., spouse, child, parent):", validators=[DataRequired(), Length(max=50)])
+    submit = SubmitField("Approve Relative")
+
 # ----------------------------------------------------------------------#
 
 # form to be completed by GP whenever they have a check-up with a patient.
