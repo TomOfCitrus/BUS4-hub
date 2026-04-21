@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {% if only_approval %}
+        <a href="{{ url_for('index') }}" style="color:white;">Back to Dashboard</a>
+    {% else %}
+        <a href="{{ url_for('select_patient') }}" style="color:white;">Back to Patient Selection</a>
+    {% endif %}
+    <h1>{{ patient_dict.first_name }} {{ patient_dict.last_name }} - Patient Information</h1>
+    <a href="{{ url_for('view_profile', patient_id=patient_dict.patient_id) }}" style="color:white;">
+        View Patient Profile
+    </a><br><br>
+    <a href="{{ url_for('view_healthlog', patient_id=patient_dict.patient_id) }}" style="color:white;">
+        View Health Logs
+    </a><br><br>
+    <a href="{{ url_for('view_checkups', patient_id=patient_dict.patient_id) }}" style="color:white;">
+        View GP Checkup Logs
+    </a>
+{% endblock %}

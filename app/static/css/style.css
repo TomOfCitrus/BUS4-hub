@@ -8,10 +8,6 @@ body{
    background-color: #F5E6D3; /* Beige background */
 }
 
-/* Links */
-a { color:#6B4F3A; text-decoration: none; }
-a:hover { color:#4B3621; }
-
 /* Utility classes */
 .pull-right { float: right; }
 .pull-left { float: left; }

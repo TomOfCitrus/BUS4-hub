@@ -71,7 +71,7 @@ class HealthLog(db.Model):
     # foreign key
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     patient_id: so.Mapped[int] = so.mapped_column(
-        sa.ForeignKey("patient_profiles.id"),
+        sa.ForeignKey("patient_profiles.user_id"),
         nullable=False)
 
     temperature: so.Mapped[float]
@@ -92,7 +92,7 @@ class Checkup(db.Model):
     __tablename__ = "checkups"
     checkup_id: so.Mapped[int] = so.mapped_column(primary_key=True, nullable=False, index=True)
 
-    patient_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("patient_profiles.id"),nullable=False)
+    patient_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("patient_profiles.user_id"),nullable=False)
     patient_last_name: so.Mapped[str] = so.mapped_column(sa.String(256), nullable=False, index=True)
     patient_first_name: so.Mapped[str] = so.mapped_column(sa.String(256), nullable=False, index=True)
 
@@ -118,7 +118,7 @@ class RelativeApproval(db.Model):
 
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     patient_id: so.Mapped[int] = so.mapped_column(
-        sa.ForeignKey("patient_profiles.id"),
+        sa.ForeignKey("patient_profiles.user_id"),
         nullable=False,
         index=True)
     relative_id: so.Mapped[int] = so.mapped_column(

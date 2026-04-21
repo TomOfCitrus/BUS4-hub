@@ -301,3 +301,113 @@ def revoke_relative(approval_id):
         db.session.rollback()
         flash("An error occurred while revoking the approval.")
         return redirect(url_for('manage_relatives'))
+
+'''
+Let Relatives View Patient Logs - Story S6:
+'''
+
+@app.route('/select_patient')
+def select_patient():
+    '''
+    Takes relatives to a menu where they can choose whose health records they'd like to check.
+    If only one patient has approved, this will immediately redirect to their information page.
+    '''
+    # Basic security gates - only the 'relative' user type can access this page:
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    elif session.get('user_role') != 'relative':
+        flash('Only approved relatives can view patient data with these settings.')
+        return redirect(url_for('index'))
+
+    patient_approvals = RelativeApproval.query.filter_by(relative_id=session['user_id']).all()
+
+    # if no patients have approved the relative, redirect to index:
+    if not patient_approvals:
+        flash('No patients have approved you yet!')
+        return redirect(url_for('index'))
+
+    # if at least one patient has approved the relative, pull their name from their patient profile:
+    patients = (
+        db.session.query(PatientProfile)
+        .join(RelativeApproval, RelativeApproval.patient_id == PatientProfile.user_id)
+        .filter(RelativeApproval.relative_id == session['user_id'])
+        .all()
+    )
+    approval_list = [
+        {
+            'patient_id': patient.user_id,
+            'last_name': patient.last_name,
+            'first_name': patient.first_name
+        }
+        for patient in patients
+    ]
+    approval_list.sort(key=lambda p: (p['last_name'].lower(), p['first_name'].lower()))
+
+    # if only one patient has approved the relative, automatically redirect to that patient's info page:
+    if len(approval_list) == 1:
+        return redirect(url_for('patient_info', patient_id=approval_list[0]['patient_id']))
+
+    # if two or more patients have approved the relative, the html page will render.
+    return render_template('select_patient.html', approval_list=approval_list)
+
+
+@app.route('/patient_information/<int:patient_id>')
+def patient_info(patient_id):
+    '''
+    Displays a menu where you can choose to read the patient's profile,
+    look through their history of health reports,
+    or read their checkup history.
+    '''
+    # Basic security gates - only the 'relative' user type can access this page:
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    elif session.get('user_role') != 'relative':
+        flash('Only approved relatives can view patient data with these settings.')
+        return redirect(url_for('index'))
+
+    # if user has exactly one patient's approval, they should be able to return straight to dashboard:
+    patient_approvals = RelativeApproval.query.filter_by(relative_id=session['user_id']).all()
+    only_approval = False
+    if len(patient_approvals) == 1:
+        only_approval = True
+
+    # pull the patient's name into the html page:
+    patient = (
+        db.session.query(PatientProfile)
+        .join(RelativeApproval, RelativeApproval.patient_id == PatientProfile.user_id)
+        .filter(PatientProfile.user_id == patient_id)
+        .first()
+    )
+    patient_dict = {
+        'patient_id': patient.user_id,
+        'last_name': patient.last_name,
+        'first_name': patient.first_name
+    }
+
+    # you can access each part of the patient's record via the following html page:
+    return render_template('patient_info.html', patient_dict=patient_dict, only_approval=only_approval)
+
+@app.route('/view_profile/<int:patient_id>')
+def view_profile(patient_id):
+    '''
+    Allows relative to view basic information provided by the patient.
+    '''
+    pass
+
+@app.route('/view_healthlog/<int:patient_id>', methods=['GET', 'POST'])
+def view_healthlog(patient_id):
+    '''
+    Allows relative to view all health logs made by the patient themselves.
+    Functions as a calendar with a form that allows you to filter down to a specific date range.
+    '''
+    pass
+
+@app.route('/view_checkups/<int:patient_id>', methods=['GET', 'POST'])
+def view_checkups(patient_id):
+    '''
+    Allows relative to view all health logs made by the patient themselves.
+    Functions as a calendar with a form that allows you to filter down to a specific date range.
+    '''
+    pass

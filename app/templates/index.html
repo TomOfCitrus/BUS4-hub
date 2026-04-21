@@ -13,6 +13,7 @@
         <h1>Carer Dashboard</h1>
         <p>Welcome to Crosscheck!</p>
         <p>This page is still under development. More will be added later!</p>
+        <a href="{{ url_for('select_patient') }}" style="color:white;">View Patient Information</a><br><br>
         <a href="{{ url_for('logout_user') }}" style="color:white;">Logout</a>
     {% elif session["user_role"] == "gp" %}
         <h1>GP Dashboard</h1>
