@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <a href="{{ url_for('patient_info', patient_id=patient_id) }}" style="color:white;">
+        Back to Patient Information
+    </a>
+    <h1>{{ patient[0] }} {{ patient[1] }} - Health Logs</h1>
+
+    <form action="" method="POST" novalidate>
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.start_date.label }} {{ form.start_date }}
+        </p>
+        <p>
+            {{ form.end_date.label }} {{ form.end_date }}
+        </p>
+        <p>{{ form.submit() }}</p>
+    </form>
+    {% if healthlog %}
+        <table border="1" cellpadding="5">
+            <thead>
+                <th>Date & Time</th>
+                <th>Temperature (°C)</th>
+                <th>Blood Pressure (mmHg)</th>
+                <th>Mood</th>
+                <th>Notes</th>
+            </thead>
+            <tbody>
+                {% for log in healthlog %}
+                    <tr>
+                        <td>
+                            {{ log.created_at.strftime('%A') }},
+                            {{ log.created_at.strftime('%Y-%m-%d') }}<br>
+                            {{ log.created_at.strftime('%H:%M') }}
+                        </td>
+                        <td>
+                            {{ log.temperature }}
+                        </td>
+                        <td>
+                            {{ log.bp_systolic }}/{{ log.bp_diastolic }}
+                        </td>
+                        <td>
+                            {{ log.mood }}
+                        </td>
+                        <td>
+                            {{ log.notes }}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No data found for the selected date range.</p>
+    {% endif %}
+{% endblock %}

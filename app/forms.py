@@ -2,7 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SelectField, SubmitField, BooleanField, TextAreaField, IntegerField, FloatField
 from wtforms.fields.datetime import DateField
 from wtforms.validators import DataRequired, Optional, Length, NumberRange
-from datetime import date
+from datetime import date, timedelta
 
 #----------------------------------------------------------------------#
 
@@ -126,3 +126,11 @@ class CheckupForm(FlaskForm):
         validators=[DataRequired(), Length(max=500)]
     )
     submit = SubmitField("Submit Check-up Record")
+
+# --------------------------------------------------------------- #
+
+# form that can be used to select date ranges for health and checkup logs:
+class CalendarForm(FlaskForm):
+    start_date = DateField('Start Date', format='%Y-%m-%d', default=lambda: date.today() - timedelta(days=7))
+    end_date = DateField('End Date', format='%Y-%m-%d', default=date.today)
+    submit = SubmitField('View Date Range')

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <a href="{{ url_for('patient_info', patient_id=patient_id) }}" style="color:white;">
+        Back to Patient Information
+    </a>
+    <h1>{{ patient[0] }} {{ patient[1] }} - Check-up Logs</h1>
+
+    <form action="" method="POST" novalidate>
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.start_date.label }} {{ form.start_date }}
+        </p>
+        <p>
+            {{ form.end_date.label }} {{ form.end_date }}
+        </p>
+        <p>{{ form.submit() }}</p>
+    </form>
+    {% if checkups %}
+        <table border="1" cellpadding="5">
+            <thead>
+                <th>Date & Time</th>
+                <th>Prescribed Medicine</th>
+                <th>Details</th>
+            </thead>
+            <tbody>
+                {% for checkup in checkups %}
+                    <tr>
+                        <td>
+                            {{ checkup.checkup_date.strftime('%A') }},
+                            {{ checkup.checkup_date.strftime('%Y-%m-%d') }}<br>
+                            {{ checkup.checkup_date.strftime('%H:%M') }}
+                        </td>
+                        {% if checkup.medication == 'N/A' and checkup.dosage == 'N/A' %}
+                            <td>
+                                N/A
+                            </td>
+                        {% else %}
+                            <td>
+                                {{ checkup.medication }}, {{ checkup.dosage }}
+                            </td>
+                        {% endif %}
+                        <td>
+                            {{ checkup.notes }}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No data found for the selected date range.</p>
+    {% endif %}
+{% endblock %}

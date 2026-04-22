@@ -2,9 +2,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask import render_template, redirect, url_for, flash, request, session
 from app import app
 from app import db
-from app.forms import RegisterForm, LoginForm, PatientProfile, HealthLog, CheckupForm, RelativeApprovalForm
+from app.forms import RegisterForm, LoginForm, PatientProfile, HealthLog, CheckupForm, RelativeApprovalForm, CalendarForm
 from app.models import User, PatientProfile, HealthLog, Checkup, RelativeApproval
 from sqlalchemy.exc import IntegrityError
+from datetime import date, datetime, timedelta
 
 #----------------------------------------------------------------------#
 @app.route('/', methods=['GET', 'POST'])
@@ -394,7 +395,14 @@ def view_profile(patient_id):
     '''
     Allows relative to view basic information provided by the patient.
     '''
-    pass
+    # query patient profile to get all rows of information about the patient:
+    patient = (
+        db.session.query(PatientProfile)
+        .join(RelativeApproval, RelativeApproval.patient_id == PatientProfile.user_id)
+        .filter(PatientProfile.user_id == patient_id)
+        .first()
+    )
+    return render_template('view_profile.html', patient=patient)
 
 @app.route('/view_healthlog/<int:patient_id>', methods=['GET', 'POST'])
 def view_healthlog(patient_id):
@@ -402,7 +410,40 @@ def view_healthlog(patient_id):
     Allows relative to view all health logs made by the patient themselves.
     Functions as a calendar with a form that allows you to filter down to a specific date range.
     '''
-    pass
+
+    # pull a date range from the form and use it to filter through health updates:
+    form = CalendarForm()
+
+    # create default start and end dates to display the last week by default:
+    start = datetime.combine(date.today() - timedelta(days=7), datetime.min.time())
+    end = datetime.combine(date.today(), datetime.max.time())
+
+    # submitting the form will change these dates:
+    if form.validate_on_submit():
+        start = datetime.combine(form.start_date.data, datetime.min.time())
+        end = datetime.combine(form.end_date.data, datetime.max.time())
+        flash('Report successfully generated!')
+
+    # now pull data from within the date range:
+    healthlog = (
+        db.session.query(HealthLog)
+        .join(RelativeApproval, RelativeApproval.patient_id == HealthLog.patient_id)
+        .filter(HealthLog.patient_id == patient_id)
+        .filter(HealthLog.created_at >= start)
+        .filter(HealthLog.created_at <= end)
+        .order_by(HealthLog.created_at)
+        .all()
+    )
+
+    # pull in the patient's profile too - just for their name:
+    patient = (
+        db.session.query(PatientProfile.first_name, PatientProfile.last_name)
+        .join(RelativeApproval, RelativeApproval.patient_id == PatientProfile.user_id)
+        .filter(PatientProfile.user_id == patient_id)
+        .first()
+    )
+    return render_template('view_healthlog.html', form=form, healthlog=healthlog, patient=patient,
+                           patient_id=patient_id)
 
 @app.route('/view_checkups/<int:patient_id>', methods=['GET', 'POST'])
 def view_checkups(patient_id):
@@ -410,4 +451,37 @@ def view_checkups(patient_id):
     Allows relative to view all health logs made by the patient themselves.
     Functions as a calendar with a form that allows you to filter down to a specific date range.
     '''
-    pass
+
+    # pull a date range from the form and use it to filter through health updates:
+    form = CalendarForm()
+
+    # create default start and end dates to display the last week by default:
+    start = datetime.combine(date.today() - timedelta(days=7), datetime.min.time())
+    end = datetime.combine(date.today(), datetime.max.time())
+
+    # submitting the form will change these dates:
+    if form.validate_on_submit():
+        start = datetime.combine(form.start_date.data, datetime.min.time())
+        end = datetime.combine(form.end_date.data, datetime.max.time())
+        flash('Report successfully generated!')
+
+    # now pull data from within the date range:
+    checkups = (
+        db.session.query(Checkup)
+        .join(RelativeApproval, RelativeApproval.patient_id == Checkup.patient_id)
+        .filter(Checkup.patient_id == patient_id)
+        .filter(Checkup.checkup_date >= start)
+        .filter(Checkup.checkup_date <= end)
+        .order_by(Checkup.checkup_date)
+        .all()
+    )
+
+    # pull in the patient's profile too - just for their name:
+    patient = (
+        db.session.query(PatientProfile.first_name, PatientProfile.last_name)
+        .join(RelativeApproval, RelativeApproval.patient_id == PatientProfile.user_id)
+        .filter(PatientProfile.user_id == patient_id)
+        .first()
+    )
+    return render_template('view_checkups.html', form=form, checkups=checkups, patient=patient,
+                           patient_id=patient_id)

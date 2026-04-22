@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <a href="{{ url_for('patient_info', patient_id=patient.user_id) }}" style="color:white;">
+        Back to Patient Information
+    </a>
+    <h1>{{ patient.first_name }} {{ patient.last_name }} - Patient Profile</h1>
+    <table border="1" cellpadding="5">
+        <tbody>
+            <tr>
+                <th colspan="2"><strong>Personal Information</strong></th>
+            </tr>
+            <tr>
+                <td><strong>Last Name</strong></td>
+                <td>{{ patient.last_name }}</td>
+            </tr>
+            <tr>
+                <td><strong>First Name(s)</strong></td>
+                <td>{{ patient.first_name }}</td>
+            </tr>
+            <tr>
+                <td><strong>Date of Birth</strong></td>
+                <td>{{ patient.date_of_birth }}</td>
+            </tr>
+            <tr>
+                <th colspan="2"><strong>Health Conditions</strong></th>
+            </tr>
+            <tr>
+                <td><strong>Hypertension</strong></td>
+                {% if patient.hypertension %}
+                    <td>Yes</td>
+                {% else %}
+                    <td>No</td>
+                {% endif %}
+            </tr>
+            <tr>
+                <td><strong>Diabetes</strong></td>
+                {% if patient.diabetes %}
+                    <td>Yes</td>
+                {% else %}
+                    <td>No</td>
+                {% endif %}
+            </tr>
+            <tr>
+                <td><strong>Heart Disease</strong></td>
+                {% if patient.heart_disease %}
+                    <td>Yes</td>
+                {% else %}
+                    <td>No</td>
+                {% endif %}
+            </tr>
+            <tr>
+                <td><strong>Arthritis</strong></td>
+                {% if patient.arthritis %}
+                    <td>Yes</td>
+                {% else %}
+                    <td>No</td>
+                {% endif %}
+            </tr>
+            <tr>
+                <td><strong>Osteoporosis</strong></td>
+                {% if patient.osteoporosis %}
+                    <td>Yes</td>
+                {% else %}
+                    <td>No</td>
+                {% endif %}
+            </tr>
+            <tr>
+                <td><strong>COPD</strong></td>
+                {% if patient.copd %}
+                    <td>Yes</td>
+                {% else %}
+                    <td>No</td>
+                {% endif %}
+            </tr>
+            <tr>
+                <td><strong>Stroke</strong></td>
+                {% if patient.stroke %}
+                    <td>Yes</td>
+                {% else %}
+                    <td>No</td>
+                {% endif %}
+            </tr>
+            <tr>
+                <td><strong>Dementia</strong></td>
+                {% if patient.dementia %}
+                    <td>Yes</td>
+                {% else %}
+                    <td>No</td>
+                {% endif %}
+            </tr>
+            <tr>
+                <td><strong>Vision Problems</strong></td>
+                {% if patient.vision_problems %}
+                    <td>Yes</td>
+                {% else %}
+                    <td>No</td>
+                {% endif %}
+            </tr>
+            <tr>
+                <td><strong>Hearing Loss</strong></td>
+                {% if patient.hearing_loss %}
+                    <td>Yes</td>
+                {% else %}
+                    <td>No</td>
+                {% endif %}
+            </tr>
+            <tr>
+                <td><strong>Allergies</strong></td>
+                <td>{{ patient.allergies }}</td>
+            </tr>
+            <tr>
+                <td><strong>Smoking Status</strong></td>
+                <td>{{ patient.smoking_status }}</td>
+            </tr>
+            <tr>
+                <td><strong>Alcohol Consumption</strong></td>
+                <td>{{ patient.alcohol_consumption }}</td>
+            </tr>
+            <tr>
+                <td><strong>Physical Activity</strong></td>
+                <td>{{ patient.physical_activity }}</td>
+            </tr>
+        </tbody>
+    </table>
+{% endblock %}
+
