@@ -161,14 +161,34 @@ def health_log():
         return redirect(url_for('health_log'))
     logs = HealthLog.query.filter_by(patient_id=profile.id)\
            .order_by(HealthLog.created_at.desc()).all()
-    return render_template('health_logs.html', form=form, logs=logs)
+    return render_template('health_logs.html', form=form, logs=logs, profile=profile)
 
 # display health data
-@app.route('/health', methods=['GET'])
-def get_health_data():
+@app.route('/search_healthlog/<int:patient_id>', methods=['GET', 'POST'])
+def get_health_log(patient_id):
     if "user_id" not in session:
         flash("Please log in first.")
         return redirect(url_for("login"))
+
+    form = CalendarForm()
+
+    start = datetime.combine(date.today() - timedelta(days=7), datetime.min.time())
+    end = datetime.combine(date.today(), datetime.max.time())
+
+    if form.validate_on_submit():
+        start = datetime.combine(form.start_date.data, datetime.min.time())
+        end = datetime.combine(form.end_date.data, datetime.max.time())
+        flash('Report successfully generated!')
+
+    healthlog = (
+        db.session.query(HealthLog)
+        .join(PatientProfile, PatientProfile.user_id == HealthLog.patient_id)
+        .filter(HealthLog.patient_id == patient_id)
+        .filter(HealthLog.created_at >= start)
+        .filter(HealthLog.created_at <= end)
+        .order_by(HealthLog.created_at.desc())
+        .all()
+    )
 
     # Get patient profile
     profile = PatientProfile.query.filter_by(user_id=session["user_id"]).first()
@@ -177,12 +197,8 @@ def get_health_data():
         flash("Patient profile not found.")
         return redirect(url_for("index"))
 
-    # Get all health logs (latest first)
-    logs = HealthLog.query.filter_by(patient_id=profile.id)\
-                          .order_by(HealthLog.created_at.desc())\
-                          .all()
-
-    return render_template("health_logs.html", logs=logs)
+    return render_template("view_healthlog.html", form=form, healthlog=healthlog, patient=profile,
+                           patient_id=patient_id)
 
 #----------------------------------------------------------------------#
 # update health data
@@ -209,12 +225,12 @@ def update_health_data(log_id):
         health_log.notes = form.notes.data
         db.session.commit()
         flash('Your health log has been updated successfully!')
-        return redirect(url_for('health_log'))
-    return render_template('updateHealth.html', form=form)
+        return redirect(url_for('get_health_log', patient_id=profile.user_id))
+    return render_template('updateHealth.html', form=form, profile=profile)
 
 #----------------------------------------------------------------------#
 # delete health data, only on optional fields
-@app.route('/health/delete/<int:log_id>', methods=['POST'])
+@app.route('/health/delete/<int:log_id>', methods=['GET','POST'])
 def delete_health_data(log_id):
     if "user_id" not in session:
         flash("Please log in first.")
@@ -230,7 +246,7 @@ def delete_health_data(log_id):
     db.session.delete(health_log)
     db.session.commit()
     flash('Your health log has been deleted successfully.')
-    return redirect(url_for("health_log"))
+    return redirect(url_for("get_health_log", patient_id=profile.user_id))
 #----------------------------------------------------------------------#
 
 # send code to relative to verify that they can access patient information
@@ -507,7 +523,7 @@ def view_healthlog(patient_id):
         .filter(HealthLog.patient_id == patient_id)
         .filter(HealthLog.created_at >= start)
         .filter(HealthLog.created_at <= end)
-        .order_by(HealthLog.created_at)
+        .order_by(HealthLog.created_at.desc())
         .all()
     )
 
@@ -548,7 +564,7 @@ def view_checkups(patient_id):
         .filter(Checkup.patient_id == patient_id)
         .filter(Checkup.checkup_date >= start)
         .filter(Checkup.checkup_date <= end)
-        .order_by(Checkup.checkup_date)
+        .order_by(Checkup.checkup_date.desc())
         .all()
     )
 

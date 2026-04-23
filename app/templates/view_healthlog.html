@@ -1,10 +1,17 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <a href="{{ url_for('patient_info', patient_id=patient_id) }}" style="color:white;">
-        Back to Patient Information
-    </a>
-    <h1>{{ patient[0] }} {{ patient[1] }} - Health Logs</h1>
+    {% if session['user_role'] == 'patient' %}
+        <a href="{{ url_for('health_log') }}" style="color:white;">
+            Back to Health Log Form
+        </a>
+        <h1>{{ patient.first_name }} {{ patient.last_name }} - Health Logs</h1>
+    {% elif session['user_role'] == 'relative' %}
+        <a href="{{ url_for('patient_info', patient_id=patient_id) }}" style="color:white;">
+            Back to Patient Information
+        </a>
+        <h1>{{ patient[0] }} {{ patient[1] }} - Health Logs</h1>
+    {% endif %}
 
     <form action="" method="POST" novalidate>
         {{ form.hidden_tag() }}
@@ -24,6 +31,10 @@
                 <th>Blood Pressure (mmHg)</th>
                 <th>Mood</th>
                 <th>Notes</th>
+                {% if session['user_role'] == 'patient' %}
+                    <th>Update Health Log</th>
+                    <th>Delete Health Log</th>
+                {% endif %}
             </thead>
             <tbody>
                 {% for log in healthlog %}
@@ -45,6 +56,18 @@
                         <td>
                             {{ log.notes }}
                         </td>
+                        {% if session['user_role'] == 'patient' %}
+                            <td>
+                                <a href="{{ url_for('update_health_data', log_id=log.id) }}" style="color:white;">
+                                    Update
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('delete_health_data', log_id=log.id) }}" style="color:white;">
+                                    Delete
+                                </a>
+                            </td>
+                        {% endif %}
                     </tr>
                 {% endfor %}
             </tbody>

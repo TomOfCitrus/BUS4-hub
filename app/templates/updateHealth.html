@@ -30,6 +30,6 @@
          <p>{{ form.submit() }}</p>
     </form>
 
-    <a href="{{ url_for('health_log') }}" style="color:white;">Cancel Update</a>
+    <a href="{{ url_for('get_health_log', patient_id=profile.user_id) }}" style="color:white;">Cancel Update</a>
 
 {% endblock %}
