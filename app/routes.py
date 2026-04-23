@@ -132,30 +132,106 @@ def patient_profile(patient_id):
 #----------------------------------------------------------------------#
 
 # display health data
+@app.route('/health', methods=['GET'])
 def get_health_data():
-    pass
+    if "user_id" not in session:
+        flash("Please log in first.")
+        return redirect(url_for("login"))
 
+    # Get patient profile
+    profile = PatientProfile.query.filter_by(user_id=session["user_id"]).first()
+
+    if not profile:
+        flash("Patient profile not found.")
+        return redirect(url_for("index"))
+
+    # Get all health logs (latest first)
+    logs = HealthLog.query.filter_by(patient_id=profile.id)\
+                          .order_by(HealthLog.created_at.desc())\
+                          .all()
+
+    return render_template("health_logs.html", logs=logs)
+
+#----------------------------------------------------------------------#
 # update health data
-def update_health_data():
+@app.route('/health/update/<int:log_id>', methods=['GET', 'POST'])
+def update_health_data(log_id=None):
+    if "user_id" not in session:
+        flash("Please log in first.")
+        return redirect(url_for("login"))
+
     form = HealthLog()
+
+    profile = PatientProfile.query.filter_by(user_id=session["user_id"]).first()
+
+    if not profile:
+        flash("Patient profile not found.")
+        return redirect(url_for("index"))
+
+    log = None
+
+    # If editing existing log
+    if log_id:
+        log = HealthLog.query.filter_by(id=log_id, patient_id=profile.id).first()
+        if not log:
+            flash("Health log not found.")
+            return redirect(url_for("get_health_data"))
+
+        if request.method == "GET":
+            form = HealthLog(obj=log)
+
     if form.validate_on_submit():
-        data = HealthLog()
-        form.populate_obj(data)
-        try:
-            db.session.add(data)
-            db.session.commit()
-            flash("Health data added!")
-            return redirect(url_for('index'))
-        except IntegrityError:         #modify this to other error in the future
-            db.session.rollback()
-            flash("Some error", "error")
+        # CREATE
+        if not log:
+            log = HealthLog(
+                patient_id=profile.id,
+                temperature=form.temperature.data,
+                bp_systolic=form.bp_systolic.data,
+                bp_diastolic=form.bp_diastolic.data,
+                mood=form.mood.data,
+                notes=form.notes.data
+            )
+            db.session.add(log)
 
-    return render_template('updateHealth.html',form=form)
+        # UPDATE
+        else:
+            log.temperature = form.temperature.data
+            log.bp_systolic = form.bp_systolic.data
+            log.bp_diastolic = form.bp_diastolic.data
+            log.mood = form.mood.data
+            log.notes = form.notes.data
 
+        db.session.commit()
+        flash("Health data saved successfully!")
+        return redirect(url_for("get_health_data"))
 
+    return render_template("health_form.html", form=form, log=log)
+#----------------------------------------------------------------------#
 # delete health data, only on optional fields
-def delete_health_data():
-    pass
+@app.route('/health/delete/<int:log_id>', methods=['POST'])
+def delete_health_data(log_id):
+    if "user_id" not in session:
+        flash("Please log in first.")
+        return redirect(url_for("login"))
+
+    profile = PatientProfile.query.filter_by(user_id=session["user_id"]).first()
+
+    if not profile:
+        flash("Patient profile not found.")
+        return redirect(url_for("index"))
+
+    log = HealthLog.query.filter_by(id=log_id, patient_id=profile.id).first()
+
+    if not log:
+        flash("Health log not found.")
+        return redirect(url_for("get_health_data"))
+
+    db.session.delete(log)
+    db.session.commit()
+
+    flash("Health log deleted.")
+    return redirect(url_for("get_health_data"))
+#----------------------------------------------------------------------#
 
 # send code to relative to verify that they can access patient information
 def verify_auth_code():
