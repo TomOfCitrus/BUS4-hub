@@ -2,16 +2,34 @@
 
 {% block content %}
 
-    <h1>Welcome to the Event Management app</h1>
+    <h1>Update Health Log</h1>
 
-     <form action='' method="post" novalidate>
+    <form action="" method="POST" novalidate>
          {{ form.hidden_tag() }}
-         {{ form.date.label }} {{ form.date }}<br><br>
-         {{ form.status.label }} {{ form.status }}<br><br>
-         {{ form.symptoms.label }} {{ form.symptoms }}<br><br>
-         {{ form.submit }}
-     </form>
 
+         <p>
+             {{ form.temperature.label }}<br>
+             {{ form.temperature }}<br>
+         </p>
+         <p>
+             {{ form.bp_systolic.label }}<br>
+             {{ form.bp_systolic }}<br>
+         </p>
+         <p>
+             {{ form.bp_diastolic.label }}<br>
+             {{ form.bp_diastolic }}<br>
+         </p>
+         <p>
+             {{ form.mood.label }}<br>
+             {{ form.mood }}<br>
+         </p>
+         <p>
+             {{ form.notes.label }}<br>
+             {{ form.notes }}<br>
+         </p>
+         <p>{{ form.submit() }}</p>
+    </form>
 
+    <a href="{{ url_for('health_log') }}" style="color:white;">Cancel Update</a>
 
 {% endblock %}

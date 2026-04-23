@@ -122,7 +122,7 @@ def reset_database():
         temperature=37.3,
         bp_systolic=124,
         bp_diastolic=86,
-        mood='Stressed',
+        mood='low',
         notes='Worried about William',
         created_at=date(2026, 3, 12)
     )
@@ -132,7 +132,7 @@ def reset_database():
         temperature=36.6,
         bp_systolic=97,
         bp_diastolic=68,
-        mood='Content',
+        mood='okay',
         notes='Been forgetful lately',
         created_at=date(2026, 4, 3)
     )

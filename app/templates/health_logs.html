@@ -1,4 +1,35 @@
-<a href="{{ url_for('update_health_data') }}">Add New Log</a>
+{% extends 'base.html' %}
+
+{% block content %}
+    <a href="{{ url_for('index') }}" style="color:white;">Back to Dashboard</a>
+    <h1>Health Log</h1>
+    <p>Please report your health updates here</p>
+
+    <form action="" method="POST" novalidate>
+        {{ form.hidden_tag() }}
+
+        <p>
+            {{ form.temperature.label }}<br>
+            {{ form.temperature }}<br>
+        </p>
+        <p>
+            {{ form.bp_systolic.label }}<br>
+            {{ form.bp_systolic }}<br>
+        </p>
+        <p>
+            {{ form.bp_diastolic.label }}<br>
+            {{ form.bp_diastolic }}<br>
+        </p>
+        <p>
+            {{ form.mood.label }}<br>
+            {{ form.mood }}<br>
+        </p>
+        <p>
+            {{ form.notes.label }}<br>
+            {{ form.notes }}<br>
+        </p>
+        <p>{{ form.submit() }}</p>
+    </form>
 
 {% for log in logs %}
   <div>
@@ -14,3 +45,5 @@
     </form>
   </div>
 {% endfor %}
+
+{% endblock %}
