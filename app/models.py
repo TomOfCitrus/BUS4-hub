@@ -1,7 +1,7 @@
 from app import db
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlalchemy.orm as so
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 import sqlalchemy as sa
 from sqlalchemy import ForeignKey
 from datetime import date, datetime, timezone
