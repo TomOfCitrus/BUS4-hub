@@ -65,7 +65,7 @@ class PatientProfile(FlaskForm):
 #----------------------------------------------------------------------#
 
 # form that can be completed whenever patient needs, will be a <a href="">
-class HealthLog(FlaskForm):
+class HealthLogForm(FlaskForm):
     temperature = FloatField(
         "Temperature (°C)",
         validators=[

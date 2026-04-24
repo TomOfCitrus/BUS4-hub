@@ -1,16 +1,37 @@
-<a href="{{ url_for('update_health_data') }}">Add New Log</a>
+{% extends 'base.html' %}
 
-{% for log in logs %}
-  <div>
-    <p>{{ log.created_at }}</p>
-    <p>Temp: {{ log.temperature }}</p>
-    <p>BP: {{ log.bp_systolic }}/{{ log.bp_diastolic }}</p>
-    <p>Mood: {{ log.mood }}</p>
+{% block content %}
+    <a href="{{ url_for('index') }}" style="color:white;">Back to Dashboard</a>
+    <h1>Health Log</h1>
+    <p>Please report your health updates here</p>
 
-    <a href="{{ url_for('update_health_data', log_id=log.id) }}">Edit</a>
+    <form action="" method="POST" novalidate>
+        {{ form.hidden_tag() }}
 
-    <form action="{{ url_for('delete_health_data', log_id=log.id) }}" method="POST">
-        <button type="submit">Delete</button>
+        <p>
+            {{ form.temperature.label }}<br>
+            {{ form.temperature }}<br>
+        </p>
+        <p>
+            {{ form.bp_systolic.label }}<br>
+            {{ form.bp_systolic }}<br>
+        </p>
+        <p>
+            {{ form.bp_diastolic.label }}<br>
+            {{ form.bp_diastolic }}<br>
+        </p>
+        <p>
+            {{ form.mood.label }}<br>
+            {{ form.mood }}<br>
+        </p>
+        <p>
+            {{ form.notes.label }}<br>
+            {{ form.notes }}<br>
+        </p>
+        <p>{{ form.submit() }}</p>
     </form>
-  </div>
-{% endfor %}
+
+    <a href="{{ url_for('get_health_log', patient_id=profile.user_id) }}" style="color:white;">
+        View Health Logs
+    </a>
+{% endblock %}
