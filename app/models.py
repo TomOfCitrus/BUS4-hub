@@ -1,7 +1,7 @@
 from app import db
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlalchemy.orm as so
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 import sqlalchemy as sa
 from sqlalchemy import ForeignKey
 from datetime import date, datetime, timezone
@@ -146,8 +146,7 @@ class RelativeInvite(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
-    patient_id: db.Column(
-        db.Integer,
+    patient_id: Mapped[int] = mapped_column(
         db.ForeignKey("patient_profiles.user_id"),
         nullable=False,
         index=True)
