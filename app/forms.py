@@ -132,5 +132,5 @@ class CheckupForm(FlaskForm):
 # form that can be used to select date ranges for health and checkup logs:
 class CalendarForm(FlaskForm):
     start_date = DateField('Start Date', format='%Y-%m-%d', default=lambda: date.today() - timedelta(days=7))
-    end_date = DateField('End Date', format='%Y-%m-%d', default=date.today)
+    end_date = DateField('End Date', format='%Y-%m-%d', default=lambda: date.today())
     submit = SubmitField('View Date Range')

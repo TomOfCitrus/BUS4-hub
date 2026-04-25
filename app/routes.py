@@ -1,5 +1,5 @@
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask import render_template, redirect, url_for, flash, request, session
+from flask import render_template, redirect, url_for, flash, request, session, abort
 from app import app
 from app import db
 from app.forms import RegisterForm, LoginForm, PatientProfileForm, HealthLogForm, CheckupForm, RelativeApprovalForm, CalendarForm
@@ -276,6 +276,7 @@ def update_health_data(log_id):
         flash("Patient profile not found.")
         return redirect(url_for("index"))
 
+    health_log = HealthLog.query.get_or_404(log_id)
     if health_log.patient_id != session["user_id"]:
         abort(403)
     form = HealthLogForm(obj=health_log)
@@ -306,6 +307,7 @@ def delete_health_data(log_id):
         flash("Patient profile not found.")
         return redirect(url_for("index"))
 
+    health_log = HealthLog.query.get_or_404(log_id)
     if health_log.patient_id != session["user_id"]:
         abort(403)
     db.session.delete(health_log)
@@ -358,7 +360,6 @@ def checkup():
     form = CheckupForm()
     if form.validate_on_submit():
         checkup_log = Checkup(
-            patient_id=profile.user_id,
             patient_last_name=form.patient_last_name.data,
             patient_first_name=form.patient_first_name.data,
             gp_id=session["user_id"],
@@ -455,7 +456,8 @@ def manage_relatives():
         try:
             new_approval = RelativeApproval(
                 patient_id=patient_profile.user_id,
-                relative_id=relative_user.id
+                relative_id=relative_user.id,
+                relationship = form.relationship.data
             )
             db.session.add(new_approval)
             db.session.commit()
