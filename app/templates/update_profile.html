@@ -1,9 +1,8 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <a href="{{ url_for('index') }}" style="color:white;">Back to Dashboard</a>
-    <h1>Patient Profile</h1>
-    <p>Please insert your personal health information below</p>
+
+    <h1>Update Profile</h1>
 
     <form action="" method="POST" novalidate>
         {{ form.hidden_tag() }}
@@ -56,4 +55,9 @@
         </p>
         <p>{{ form.submit() }}</p>
     </form>
+
+    <a href="{{ url_for('get_patient_profile', patient_id=profile.user_id) }}" style="color:white;">
+        Cancel Update
+    </a>
+
 {% endblock %}

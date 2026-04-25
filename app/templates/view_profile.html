@@ -1,9 +1,15 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <a href="{{ url_for('patient_info', patient_id=patient.user_id) }}" style="color:white;">
-        Back to Patient Information
-    </a>
+    {% if session['user_role'] == 'patient' %}
+        <a href="{{ url_for('index') }}" style="color:white;">
+            Back to Dashboard
+        </a>
+    {% elif session['user_role'] == 'relative' %}
+        <a href="{{ url_for('patient_info', patient_id=patient.user_id) }}" style="color:white;">
+            Back to Patient Information
+        </a>
+    {% endif %}
     <h1>{{ patient.first_name }} {{ patient.last_name }} - Patient Profile</h1>
     <table border="1" cellpadding="5">
         <tbody>
@@ -123,5 +129,10 @@
             </tr>
         </tbody>
     </table>
+    {% if session['user_role'] == 'patient' %}
+        <a href="{{ url_for('update_patient_profile', patient_id=patient.user_id) }}" style="color:white;">
+            Update Your Profile
+        </a>
+    {% endif %}
 {% endblock %}
 

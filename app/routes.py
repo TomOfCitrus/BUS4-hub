@@ -100,14 +100,73 @@ def logout_user():
 # ALLOW GP AND PATIENT TO CREATE, UPDATE, READ, AND DELETE HEALTH RECORDS
 #----------------------------------------------------------------------#
 
-@app.route('/patient/<int:patient_id>', methods=['GET', 'POST'])
-def patient_profile(patient_id):
+@app.route('/profile', methods=['GET', 'POST'])
+def patient_profile():
+    if 'user_id' not in session:
+        flash('Please log in first.')
+        return redirect(url_for('login'))
+
+    user = User.query.get_or_404(session['user_id'])
+
+    profile = PatientProfile.query.filter_by(user_id=session["user_id"]).first()
+
+    if not profile:
+
+        form = PatientProfileForm()
+
+        if form.validate_on_submit():
+            patient_profile = PatientProfile(
+                user_id=session['user_id'],
+                first_name=user.first_name,
+                last_name=user.last_name,
+                date_of_birth=user.date_of_birth,
+                hypertension=form.hypertension.data,
+                diabetes=form.diabetes.data,
+                heart_disease=form.heart_disease.data,
+                arthritis=form.arthritis.data,
+                osteoporosis=form.osteoporosis.data,
+                copd=form.copd.data,
+                stroke=form.stroke.data,
+                dementia=form.dementia.data,
+                vision_problems=form.vision_problems.data,
+                hearing_loss=form.hearing_loss.data,
+                allergies=form.allergies.data,
+                smoking_status=form.smoking_status.data,
+                alcohol_consumption=form.alcohol_consumption.data,
+                physical_activity=form.physical_activity.data
+            )
+            db.session.add(patient_profile)
+            db.session.commit()
+            flash('Your patient profile has been successfully created!')
+            return redirect(url_for('index'))
+
+    else:
+        return redirect(url_for('get_patient_profile', patient_id=profile.user_id))
+    return render_template('patient_profile.html', form=form)
+
+@app.route('/get_profile/<int:patient_id>', methods=['GET', 'POST'])
+def get_patient_profile(patient_id):
+    if "user_id" not in session:
+        flash("Please log in first.")
+        return redirect(url_for("login"))
+
+    patient = db.session.query(PatientProfile)\
+    .filter(PatientProfile.user_id == patient_id).first()
+
+    return render_template('view_profile.html', patient=patient)
+
+@app.route('/update_profile/<int:patient_id>', methods=['GET', 'POST'])
+def update_patient_profile(patient_id):
+    if 'user_id' not in session:
+        flash("Please log in first.")
+        return redirect(url_for("login"))
+
     profile = PatientProfile.query.filter_by(user_id=patient_id).first()
     if not profile:
         flash("Patient profile not found.")
         return redirect(url_for("index"))
 
-    form = PatientProfile(obj=profile)
+    form = PatientProfileForm(obj=profile)
 
     if form.validate_on_submit():
         # Update profile fields
@@ -128,9 +187,9 @@ def patient_profile(patient_id):
 
         db.session.commit()
         flash("Profile updated successfully!")
-        return redirect(url_for("index"))
+        return redirect(url_for("get_patient_profile", patient_id=profile.user_id))
 
-    return render_template("patient_profile.html", form=form, profile=profile)
+    return render_template("update_profile.html", form=form, profile=profile)
 
 #----------------------------------------------------------------------#
 
@@ -167,7 +226,7 @@ def health_log():
     return render_template('health_logs.html', form=form, logs=logs, profile=profile)
 
 # display health data
-@app.route('/search_healthlog/<int:patient_id>', methods=['GET', 'POST'])
+@app.route('/get_healthlog/<int:patient_id>', methods=['GET', 'POST'])
 def get_health_log(patient_id):
     if "user_id" not in session:
         flash("Please log in first.")
@@ -344,7 +403,7 @@ def manage_relatives():
 
         # Check if already approved
         existing_approval = RelativeApproval.query.filter_by(
-            patient_id=patient_profile.id,
+            patient_id=patient_profile.user_id,
             relative_id=relative_user.id
         ).first()
 
@@ -355,12 +414,11 @@ def manage_relatives():
         # Create new approval
         try:
             new_approval = RelativeApproval(
-                patient_id=patient_profile.id,
+                patient_id=patient_profile.user_id,
                 relative_id=relative_user.id
             )
             db.session.add(new_approval)
             db.session.commit()
-            flash(f"Successfully approved {form.relative_email.data} as a relative!")
             return redirect(url_for('manage_relatives'))
         except IntegrityError:
             db.session.rollback()
@@ -460,23 +518,25 @@ def approve_relative_from_token(token, relative_user_id):
 
 #----------------------------------------------------------------------#
 
-@app.route('/generate_relative_code', methods=['POST'])
-def generate_relative_code():
+@app.route('/generate_relative_code/<int:relative_id>', methods=['GET', 'POST'])
+def generate_relative_code(relative_id):
     if 'user_id' not in session or session.get('user_role') != 'patient':
         return redirect(url_for('login'))
 
     patient_profile = PatientProfile.query.filter_by(user_id=session['user_id']).first()
 
-    relative_email = request.form.get('relative_email')
+    relative = User.query.get_or_404(relative_id)
+    relative_email = relative.email
 
     token = create_relative_invite(patient_profile.user_id, relative_email)
 
     flash(f"Access code for {relative_email}: {token}")
+    print(token)
     return redirect(url_for('manage_relatives'))
 
 #----------------------------------------------------------------------#
 
-@app.route('/use_relative_code', methods=['POST'])
+@app.route('/use_relative_code', methods=['GET','POST'])
 def use_relative_code():
     if 'user_id' not in session or session.get('user_role') != 'relative':
         return redirect(url_for('login'))
