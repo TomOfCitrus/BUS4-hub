@@ -210,7 +210,7 @@ def health_log():
 
     if form.validate_on_submit():
         health_log = HealthLog(
-            patient_id=profile.patient_id,
+            patient_id=profile.user_id,
             temperature=form.temperature.data,
             bp_systolic=form.bp_systolic.data,
             bp_diastolic=form.bp_diastolic.data,
@@ -221,7 +221,7 @@ def health_log():
         db.session.commit()
         flash('Your health update has been successfully logged!')
         return redirect(url_for('health_log'))
-    logs = HealthLog.query.filter_by(patient_id=patient_id)\
+    logs = HealthLog.query.filter_by(patient_id=profile.user_id)\
            .order_by(HealthLog.created_at.desc()).all()
     return render_template('health_logs.html', form=form, logs=logs, profile=profile)
 
@@ -253,7 +253,7 @@ def get_health_log(patient_id):
     )
 
     # Get patient profile
-    profile = PatientProfile.query.filter_by(user_id=session["user_id"]).first()
+    profile = PatientProfile.query.filter_by(user_id=patient_id).first()
 
     if not profile:
         flash("Patient profile not found.")
@@ -276,7 +276,8 @@ def update_health_data(log_id):
         flash("Patient profile not found.")
         return redirect(url_for("index"))
 
-    health_log = HealthLog.query.get_or_404(log_id)
+    if health_log.patient_id != session["user_id"]:
+        abort(403)
     form = HealthLogForm(obj=health_log)
 
     if form.validate_on_submit():
@@ -305,7 +306,8 @@ def delete_health_data(log_id):
         flash("Patient profile not found.")
         return redirect(url_for("index"))
 
-    health_log = HealthLog.query.get_or_404(log_id)
+    if health_log.patient_id != session["user_id"]:
+        abort(403)
     db.session.delete(health_log)
     db.session.commit()
     flash('Your health log has been deleted successfully.')
@@ -542,10 +544,6 @@ def approve_relative_from_token(token, relative_user_id):
         patient_id=invite.patient_id,
         relative_id=relative_user_id
     )
-
-    if not approval:
-        flash("Unauthorised access.")
-        return redirect(url_for("index"))
 
     invite.used = True
 
