@@ -312,6 +312,42 @@ def delete_health_data(log_id):
     return redirect(url_for("get_health_log", patient_id=profile.user_id))
 
 #----------------------------------------------------------------------#
+
+@app.route('/get_checkups/<int:patient_id>', methods=['GET', 'POST'])
+def get_checkups(patient_id):
+    if 'user_id' not in session:
+        flash('Please log in first.')
+        return redirect(url_for('login'))
+
+    form = CalendarForm()
+
+    start = datetime.combine(date.today() - timedelta(days=7), datetime.min.time())
+    end = datetime.combine(date.today(), datetime.max.time())
+
+    if form.validate_on_submit():
+        start = datetime.combine(form.start_date.data, datetime.min.time())
+        end = datetime.combine(form.end_date.data, datetime.max.time())
+        flash('Report successfully generated!')
+
+    checkups = (db.session.query(Checkup)
+        .join(PatientProfile, PatientProfile.user_id == Checkup.patient_id)
+        .filter(Checkup.patient_id == patient_id)
+        .filter(Checkup.checkup_date >= start)
+        .filter(Checkup.checkup_date <= end)
+        .order_by(Checkup.checkup_date.desc())
+        .all()
+    )
+
+    profile = PatientProfile.query.filter_by(user_id=session['user_id']).first()
+
+    if not profile:
+        flash('Patient profile not found.')
+        return redirect(url_for('index'))
+
+    return render_template('view_checkups.html', form=form, checkups=checkups, patient=profile,
+                           patient_id=patient_id)
+
+#----------------------------------------------------------------------#
 # ALLOW GP TO CREATE, UPDATE, AND DELETE CHECK-UPS
 #----------------------------------------------------------------------#
 

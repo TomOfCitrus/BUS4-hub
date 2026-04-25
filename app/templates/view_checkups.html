@@ -1,10 +1,17 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <a href="{{ url_for('patient_info', patient_id=patient_id) }}" style="color:white;">
-        Back to Patient Information
-    </a>
-    <h1>{{ patient[0] }} {{ patient[1] }} - Check-up Logs</h1>
+    {% if session['user_role'] == 'patient' %}
+        <a href="{{ url_for('index') }}" style="color:white;">
+            Back to Dashboard
+        </a>
+        <h1>{{ patient.first_name }} {{ patient.last_name }} - Check-up Logs</h1>
+    {% elif session['user_role'] == 'relative' %}
+        <a href="{{ url_for('patient_info', patient_id=patient_id) }}" style="color:white;">
+            Back to Patient Information
+        </a>
+        <h1>{{ patient[0] }} {{ patient[1] }} - Check-up Logs</h1>
+    {% endif %}
 
     <form action="" method="POST" novalidate>
         {{ form.hidden_tag() }}
