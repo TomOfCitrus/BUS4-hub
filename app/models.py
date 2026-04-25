@@ -31,12 +31,8 @@ class User(db.Model):
 class PatientProfile(db.Model):
     __tablename__ = "patient_profiles"
 
-    # foreign key
-    id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    user_id: so.Mapped[int] = so.mapped_column(
-        sa.ForeignKey("users.id"),
-        nullable=False,
-        unique=True)
+    # primary key
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
 
     first_name: so.Mapped[str] = so.mapped_column(nullable=False, index=True)
     last_name: so.Mapped[str] = so.mapped_column(nullable=False, index=True)
@@ -54,6 +50,9 @@ class PatientProfile(db.Model):
     vision_problems: so.Mapped[bool] = so.mapped_column(default=False)
     hearing_loss: so.Mapped[bool] = so.mapped_column(default=False)
     allergies: so.Mapped[str] = so.mapped_column(default="")
+    medication_name: so.Mapped[str] = so.mapped_column(default="")
+    dosage: so.Mapped[str] = so.mapped_column(default="")
+    notes: so.Mapped[str] = so.mapped_column(default="")
     smoking_status: so.Mapped[str] = so.mapped_column(default="")
     alcohol_consumption: so.Mapped[str] = so.mapped_column(default="")
     physical_activity: so.Mapped[str] = so.mapped_column(default="")
@@ -75,10 +74,10 @@ class HealthLog(db.Model):
         sa.ForeignKey("patient_profiles.user_id"),
         nullable=False)
 
-    temperature: so.Mapped[float] = so.mapped_column(sa.Float, nullable=False, index=True)
-    bp_systolic: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False, index=True)
-    bp_diastolic: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=False, index=True)
-    mood: so.Mapped[str] = so.mapped_column(sa.String, nullable=False, index=True)
+    temperature: so.Mapped[float] = so.mapped_column(sa.Float, nullable=True, index=True)
+    bp_systolic: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=True, index=True)
+    bp_diastolic: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=True, index=True)
+    mood: so.Mapped[str] = so.mapped_column(sa.String, nullable=True, index=True)
     notes: so.Mapped[str] = so.mapped_column(sa.String(500))
     created_at: so.Mapped[datetime] = so.mapped_column(
         sa.DateTime,
@@ -99,7 +98,7 @@ class Checkup(db.Model):
 
     gp_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey("users.id"), nullable=False)
 
-    checkup_date: so.Mapped[datetime] = so.mapped_column(sa.DATE, nullable=False, default=lambda: datetime.now(timezone.utc))
+    checkup_date: so.Mapped[datetime] = so.mapped_column(date, nullable=False, default=lambda: datetime.now(timezone.utc))
     medication: so.Mapped[str] = so.mapped_column(sa.String(256), nullable=False, index=True)
     dosage: so.Mapped[str] = so.mapped_column(sa.String(256), nullable=False, index=True)
     notes: so.Mapped[str] = so.mapped_column(sa.String(256), nullable=False, index=True)
@@ -126,7 +125,7 @@ class RelativeApproval(db.Model):
         sa.ForeignKey("users.id"),
         nullable=False,
         index=True)
-
+    relationship: so.Mapped[str] = so.mapped_column(sa.String(50), nullable=False)
     approved_at: so.Mapped[datetime] = so.mapped_column(
         sa.DateTime,
         default=datetime.utcnow,

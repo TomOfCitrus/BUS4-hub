@@ -1,5 +1,5 @@
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask import render_template, redirect, url_for, flash, request, session
+from flask import render_template, redirect, url_for, flash, request, session, abort
 from app import app
 from app import db
 from app.forms import RegisterForm, LoginForm, PatientProfileForm, HealthLogForm, CheckupForm, RelativeApprovalForm, CalendarForm
@@ -221,7 +221,7 @@ def health_log():
         db.session.commit()
         flash('Your health update has been successfully logged!')
         return redirect(url_for('health_log'))
-    logs = HealthLog.query.filter_by(patient_id=profile.id)\
+    logs = HealthLog.query.filter_by(patient_id=profile.user_id)\
            .order_by(HealthLog.created_at.desc()).all()
     return render_template('health_logs.html', form=form, logs=logs, profile=profile)
 
@@ -253,7 +253,7 @@ def get_health_log(patient_id):
     )
 
     # Get patient profile
-    profile = PatientProfile.query.filter_by(user_id=session["user_id"]).first()
+    profile = PatientProfile.query.filter_by(user_id=patient_id).first()
 
     if not profile:
         flash("Patient profile not found.")
@@ -277,6 +277,8 @@ def update_health_data(log_id):
         return redirect(url_for("index"))
 
     health_log = HealthLog.query.get_or_404(log_id)
+    if health_log.patient_id != session["user_id"]:
+        abort(403)
     form = HealthLogForm(obj=health_log)
 
     if form.validate_on_submit():
@@ -306,6 +308,8 @@ def delete_health_data(log_id):
         return redirect(url_for("index"))
 
     health_log = HealthLog.query.get_or_404(log_id)
+    if health_log.patient_id != session["user_id"]:
+        abort(403)
     db.session.delete(health_log)
     db.session.commit()
     flash('Your health log has been deleted successfully.')
@@ -358,6 +362,7 @@ def checkup():
         checkup_log = Checkup(
             patient_last_name=form.patient_last_name.data,
             patient_first_name=form.patient_first_name.data,
+            gp_id=session["user_id"],
             checkup_date=form.checkup_date.data,
             medication=form.medication.data,
             dosage=form.dosage.data,
@@ -451,7 +456,8 @@ def manage_relatives():
         try:
             new_approval = RelativeApproval(
                 patient_id=patient_profile.user_id,
-                relative_id=relative_user.id
+                relative_id=relative_user.id,
+                relationship = form.relationship.data
             )
             db.session.add(new_approval)
             db.session.commit()
@@ -482,7 +488,7 @@ def revoke_relative(approval_id):
 
     # Verify this approval belongs to the current patient
     patient_profile = PatientProfile.query.filter_by(user_id=session['user_id']).first()
-    if approval.patient_id != patient_profile.id:
+    if approval.patient_id != patient_profile.user_id:
         flash("You do not have permission to revoke this approval.")
         return redirect(url_for('manage_relatives'))
 
@@ -536,14 +542,10 @@ def approve_relative_from_token(token, relative_user_id):
     if existing:
         return False, "Already approved"
 
-    approval = RelativeApproval.query.filter_by(
+    approval = RelativeApproval(
         patient_id=invite.patient_id,
         relative_id=relative_user_id
     )
-
-    if not approval:
-        flash("Unauthorised access.")
-        return redirect(url_for("index"))
 
     invite.used = True
 
