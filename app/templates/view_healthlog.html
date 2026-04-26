@@ -15,26 +15,57 @@
 
     <form action="" method="POST" novalidate>
         {{ form.hidden_tag() }}
-        <p>
-            {{ form.start_date.label }} {{ form.start_date }}
-        </p>
-        <p>
-            {{ form.end_date.label }} {{ form.end_date }}
-        </p>
+
+        <fieldset>
+            <legend>Filter by Date Range</legend>
+            <p>
+                {{ form.start_date.label }} {{ form.start_date }}
+            </p>
+            <p>
+                {{ form.end_date.label }} {{ form.end_date }}
+            </p>
+        </fieldset>
+
+        <fieldset>
+            <legend>Sort Records</legend>
+            <p>
+                {{ form.sort_by.label }} {{ form.sort_by }}
+            </p>
+            <p>
+                {{ form.sort_order.label }} {{ form.sort_order }}
+            </p>
+        </fieldset>
+
         <p>{{ form.submit() }}</p>
     </form>
+
     {% if healthlog %}
+        <p>Showing {{ healthlog | length }} record(s) &mdash;
+            sorted by
+            <strong>
+                {% if sort_by == 'date' %}Date
+                {% elif sort_by == 'temperature' %}Temperature
+                {% elif sort_by == 'bp_systolic' %}Blood Pressure (Systolic)
+                {% elif sort_by == 'bp_diastolic' %}Blood Pressure (Diastolic)
+                {% elif sort_by == 'mood' %}Mood
+                {% endif %}
+            </strong>
+            ({{ 'newest first' if sort_order == 'desc' else 'oldest / lowest first' }})
+        </p>
+
         <table border="1" cellpadding="5">
             <thead>
-                <th>Date & Time</th>
-                <th>Temperature (°C)</th>
-                <th>Blood Pressure (mmHg)</th>
-                <th>Mood</th>
-                <th>Notes</th>
-                {% if session['user_role'] == 'patient' %}
-                    <th>Update Health Log</th>
-                    <th>Delete Health Log</th>
-                {% endif %}
+                <tr>
+                    <th>Date &amp; Time</th>
+                    <th>Temperature (&deg;C)</th>
+                    <th>Blood Pressure (mmHg)</th>
+                    <th>Mood</th>
+                    <th>Notes</th>
+                    {% if session['user_role'] == 'patient' %}
+                        <th>Update</th>
+                        <th>Delete</th>
+                    {% endif %}
+                </tr>
             </thead>
             <tbody>
                 {% for log in healthlog %}
@@ -44,18 +75,10 @@
                             {{ log.created_at.strftime('%Y-%m-%d') }}<br>
                             {{ log.created_at.strftime('%H:%M') }}
                         </td>
-                        <td>
-                            {{ log.temperature }}
-                        </td>
-                        <td>
-                            {{ log.bp_systolic }}/{{ log.bp_diastolic }}
-                        </td>
-                        <td>
-                            {{ log.mood }}
-                        </td>
-                        <td>
-                            {{ log.notes }}
-                        </td>
+                        <td>{{ log.temperature }}</td>
+                        <td>{{ log.bp_systolic }}/{{ log.bp_diastolic }}</td>
+                        <td>{{ log.mood | capitalize }}</td>
+                        <td>{{ log.notes }}</td>
                         {% if session['user_role'] == 'patient' %}
                             <td>
                                 <a href="{{ url_for('update_health_data', log_id=log.id) }}" style="color:white;">

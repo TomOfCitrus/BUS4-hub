@@ -38,7 +38,7 @@ class PatientProfileForm(FlaskForm):
     osteoporosis = BooleanField('Osteoporosis')
     copd = BooleanField('COPD')
     stroke = BooleanField('Stroke')
-    dementia = BooleanField('Dementia / Alzheimer’s')
+    dementia = BooleanField('Dementia / Alzheimer\u2019s')
     vision_problems = BooleanField('Vision Problems')
     hearing_loss = BooleanField('Hearing Loss')
 
@@ -67,7 +67,7 @@ class PatientProfileForm(FlaskForm):
 # form that can be completed whenever patient needs, will be a <a href="">
 class HealthLogForm(FlaskForm):
     temperature = FloatField(
-        "Temperature (°C)",
+        "Temperature (\u00b0C)",
         validators=[
             Optional(),
             NumberRange(min=30, max=45)],
@@ -129,8 +129,35 @@ class CheckupForm(FlaskForm):
 
 # --------------------------------------------------------------- #
 
-# form that can be used to select date ranges for health and checkup logs:
+# form that can be used to select date ranges for health and checkup logs,
+# with optional sorting controls for Story S2.
 class CalendarForm(FlaskForm):
     start_date = DateField('Start Date', format='%Y-%m-%d', default=lambda: date.today() - timedelta(days=7))
     end_date = DateField('End Date', format='%Y-%m-%d', default=date.today)
+
+    # S2: sort field — what column to sort by
+    sort_by = SelectField(
+        'Sort By',
+        choices=[
+            ('date', 'Date'),
+            ('temperature', 'Temperature'),
+            ('bp_systolic', 'Blood Pressure (Systolic)'),
+            ('bp_diastolic', 'Blood Pressure (Diastolic)'),
+            ('mood', 'Mood'),
+        ],
+        default='date',
+        validators=[Optional()]
+    )
+
+    # S2: sort direction
+    sort_order = SelectField(
+        'Order',
+        choices=[
+            ('desc', 'Newest First'),
+            ('asc', 'Oldest First'),
+        ],
+        default='desc',
+        validators=[Optional()]
+    )
+
     submit = SubmitField('View Date Range')
