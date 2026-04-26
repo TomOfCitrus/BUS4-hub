@@ -6,6 +6,7 @@ from app.forms import RegisterForm, LoginForm, PatientProfileForm, HealthLogForm
 from app.models import User, PatientProfile, HealthLog, Checkup, RelativeApproval, RelativeInvite
 from sqlalchemy.exc import IntegrityError
 from datetime import date, datetime, timedelta
+import sqlalchemy as sa
 
 #----------------------------------------------------------------------#
 @app.route('/', methods=['GET', 'POST'])
@@ -169,7 +170,6 @@ def update_patient_profile(patient_id):
     form = PatientProfileForm(obj=profile)
 
     if form.validate_on_submit():
-        # Update profile fields
         profile.hypertension = form.hypertension.data
         profile.diabetes = form.diabetes.data
         profile.heart_disease = form.heart_disease.data
@@ -199,7 +199,6 @@ def health_log():
         flash("Please log in first.")
         return redirect(url_for("login"))
 
-    # Get patient profile
     profile = PatientProfile.query.filter_by(user_id=session["user_id"]).first()
 
     if not profile:
@@ -225,7 +224,29 @@ def health_log():
            .order_by(HealthLog.created_at.desc()).all()
     return render_template('health_logs.html', form=form, logs=logs, profile=profile)
 
-# display health data
+#----------------------------------------------------------------------#
+
+def _apply_healthlog_sort(query, sort_by, sort_order):
+    """
+    S2: Helper to apply sorting to a HealthLog query.
+    Accepts a column name and direction ('asc' / 'desc').
+    Falls back to created_at descending for any unrecognised value.
+    """
+    column_map = {
+        'date':         HealthLog.created_at,
+        'temperature':  HealthLog.temperature,
+        'bp_systolic':  HealthLog.bp_systolic,
+        'bp_diastolic': HealthLog.bp_diastolic,
+        'mood':         HealthLog.mood,
+    }
+    col = column_map.get(sort_by, HealthLog.created_at)
+    if sort_order == 'asc':
+        return query.order_by(col.asc())
+    return query.order_by(col.desc())
+
+#----------------------------------------------------------------------#
+
+# display health data — patient view
 @app.route('/get_healthlog/<int:patient_id>', methods=['GET', 'POST'])
 def get_health_log(patient_id):
     if "user_id" not in session:
@@ -234,33 +255,45 @@ def get_health_log(patient_id):
 
     form = CalendarForm()
 
+    # Default date window: last 7 days
     start = datetime.combine(date.today() - timedelta(days=7), datetime.min.time())
-    end = datetime.combine(date.today(), datetime.max.time())
+    end   = datetime.combine(date.today(), datetime.max.time())
+
+    # Default sort values
+    sort_by    = 'date'
+    sort_order = 'desc'
 
     if form.validate_on_submit():
-        start = datetime.combine(form.start_date.data, datetime.min.time())
-        end = datetime.combine(form.end_date.data, datetime.max.time())
+        start      = datetime.combine(form.start_date.data, datetime.min.time())
+        end        = datetime.combine(form.end_date.data, datetime.max.time())
+        sort_by    = form.sort_by.data    or 'date'
+        sort_order = form.sort_order.data or 'desc'
         flash('Report successfully generated!')
 
-    healthlog = (
+    base_query = (
         db.session.query(HealthLog)
         .join(PatientProfile, PatientProfile.user_id == HealthLog.patient_id)
         .filter(HealthLog.patient_id == patient_id)
         .filter(HealthLog.created_at >= start)
         .filter(HealthLog.created_at <= end)
-        .order_by(HealthLog.created_at.desc())
-        .all()
     )
 
-    # Get patient profile
-    profile = PatientProfile.query.filter_by(user_id=session["user_id"]).first()
+    healthlog = _apply_healthlog_sort(base_query, sort_by, sort_order).all()
 
+    profile = PatientProfile.query.filter_by(user_id=session["user_id"]).first()
     if not profile:
         flash("Patient profile not found.")
         return redirect(url_for("index"))
 
-    return render_template("view_healthlog.html", form=form, healthlog=healthlog, patient=profile,
-                           patient_id=patient_id)
+    return render_template(
+        "view_healthlog.html",
+        form=form,
+        healthlog=healthlog,
+        patient=profile,
+        patient_id=patient_id,
+        sort_by=sort_by,
+        sort_order=sort_order
+    )
 
 #----------------------------------------------------------------------#
 # update health data
@@ -280,11 +313,11 @@ def update_health_data(log_id):
     form = HealthLogForm(obj=health_log)
 
     if form.validate_on_submit():
-        health_log.temperature = form.temperature.data
-        health_log.bp_systolic = form.bp_systolic.data
+        health_log.temperature  = form.temperature.data
+        health_log.bp_systolic  = form.bp_systolic.data
         health_log.bp_diastolic = form.bp_diastolic.data
-        health_log.mood = form.mood.data
-        health_log.notes = form.notes.data
+        health_log.mood         = form.mood.data
+        health_log.notes        = form.notes.data
         db.session.commit()
         flash('Your health log has been updated successfully!')
         return redirect(url_for('get_health_log', patient_id=profile.user_id))
@@ -292,7 +325,7 @@ def update_health_data(log_id):
 
 #----------------------------------------------------------------------#
 
-# delete health data, only on optional fields
+# delete health data
 @app.route('/health/delete/<int:log_id>', methods=['GET','POST'])
 def delete_health_data(log_id):
     if "user_id" not in session:
@@ -322,11 +355,11 @@ def get_checkups(patient_id):
     form = CalendarForm()
 
     start = datetime.combine(date.today() - timedelta(days=7), datetime.min.time())
-    end = datetime.combine(date.today(), datetime.max.time())
+    end   = datetime.combine(date.today(), datetime.max.time())
 
     if form.validate_on_submit():
         start = datetime.combine(form.start_date.data, datetime.min.time())
-        end = datetime.combine(form.end_date.data, datetime.max.time())
+        end   = datetime.combine(form.end_date.data, datetime.max.time())
         flash('Report successfully generated!')
 
     checkups = (db.session.query(Checkup)
@@ -378,12 +411,12 @@ def update_checkup(checkup_id):
     form = CheckupForm(obj=checkup_log)
 
     if form.validate_on_submit():
-        checkup_log.patient_last_name = form.patient_last_name.data
+        checkup_log.patient_last_name  = form.patient_last_name.data
         checkup_log.patient_first_name = form.patient_first_name.data
-        checkup_log.checkup_date = form.checkup_date.data
-        checkup_log.medication = form.medication.data
-        checkup_log.dosage = form.dosage.data
-        checkup_log.notes = form.notes.data
+        checkup_log.checkup_date       = form.checkup_date.data
+        checkup_log.medication         = form.medication.data
+        checkup_log.dosage             = form.dosage.data
+        checkup_log.notes              = form.notes.data
         db.session.commit()
         flash(f'Check-up details have been updated successfully!')
         return redirect(url_for('checkup'))
@@ -405,10 +438,6 @@ def delete_checkup(checkup_id):
 
 @app.route('/manage_relatives', methods=['GET', 'POST'])
 def manage_relatives():
-    """
-    Allow patients to view and manage their approved relatives.
-    Patients can approve new relatives to access their health records.
-    """
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
@@ -416,7 +445,6 @@ def manage_relatives():
         flash("Only patients can manage relatives.")
         return redirect(url_for('index'))
 
-    # Get the patient's profile
     patient_profile = PatientProfile.query.filter_by(user_id=session['user_id']).first()
     if not patient_profile:
         flash("Patient profile not found.")
@@ -425,19 +453,16 @@ def manage_relatives():
     form = RelativeApprovalForm()
 
     if form.validate_on_submit():
-        # Check if the relative exists in the system
         relative_user = User.query.filter_by(email=form.relative_email.data.lower()).first()
 
         if not relative_user:
             flash(f"No user found with email: {form.relative_email.data}. Please ensure the relative has registered.")
             return render_template('manage_relatives.html', form=form, approved_relatives=patient_profile.approved_relatives)
 
-        # Check if the relative is actually a relative
         if relative_user.role != "relative":
             flash(f"User {form.relative_email.data} is not registered as a relative.")
             return render_template('manage_relatives.html', form=form, approved_relatives=patient_profile.approved_relatives)
 
-        # Check if already approved
         existing_approval = RelativeApproval.query.filter_by(
             patient_id=patient_profile.user_id,
             relative_id=relative_user.id
@@ -447,7 +472,6 @@ def manage_relatives():
             flash(f"This relative is already approved.")
             return render_template('manage_relatives.html', form=form, approved_relatives=patient_profile.approved_relatives)
 
-        # Create new approval
         try:
             new_approval = RelativeApproval(
                 patient_id=patient_profile.user_id,
@@ -467,9 +491,6 @@ def manage_relatives():
 
 @app.route('/revoke_relative/<int:approval_id>', methods=['POST'])
 def revoke_relative(approval_id):
-    """
-    Allow patients to revoke approval for a relative to access their health records.
-    """
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
@@ -477,10 +498,8 @@ def revoke_relative(approval_id):
         flash("Only patients can revoke relative approvals.")
         return redirect(url_for('index'))
 
-    # Get the approval record
     approval = RelativeApproval.query.get_or_404(approval_id)
 
-    # Verify this approval belongs to the current patient
     patient_profile = PatientProfile.query.filter_by(user_id=session['user_id']).first()
     if approval.patient_id != patient_profile.id:
         flash("You do not have permission to revoke this approval.")
@@ -500,7 +519,6 @@ def revoke_relative(approval_id):
 # ALLOW RELATIVE TO VIEW PATIENT RECORD
 #----------------------------------------------------------------------#
 
-# create invite – patient side
 def create_relative_invite(patient_id, relative_email, hours_valid=24):
     invite = RelativeInvite(
         patient_id=patient_id,
@@ -508,15 +526,12 @@ def create_relative_invite(patient_id, relative_email, hours_valid=24):
         expires_at=datetime.utcnow() + timedelta(hours=hours_valid)
     )
     invite.generate_token()
-
     db.session.add(invite)
     db.session.commit()
-
     return invite.token
 
 #----------------------------------------------------------------------#
 
-# approve from token – relative side
 def approve_relative_from_token(token, relative_user_id):
     invite = RelativeInvite.query.filter_by(token=token).first()
 
@@ -588,11 +603,6 @@ def use_relative_code():
 
 @app.route('/select_patient')
 def select_patient():
-    """
-    Takes relatives to a menu where they can choose whose health records they'd like to check.
-    If only one patient has approved, this will immediately redirect to their information page.
-    """
-    # Basic security gates - only the 'relative' user type can access this page:
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
@@ -602,12 +612,10 @@ def select_patient():
 
     patient_approvals = RelativeApproval.query.filter_by(relative_id=session['user_id']).all()
 
-    # if no patients have approved the relative, redirect to index:
     if not patient_approvals:
         flash('No patients have approved you yet!')
         return redirect(url_for('index'))
 
-    # if at least one patient has approved the relative, pull their name from their patient profile:
     patients = (
         db.session.query(PatientProfile)
         .join(RelativeApproval, RelativeApproval.patient_id == PatientProfile.user_id)
@@ -624,23 +632,15 @@ def select_patient():
     ]
     approval_list.sort(key=lambda p: (p['last_name'].lower(), p['first_name'].lower()))
 
-    # if only one patient has approved the relative, automatically redirect to that patient's info page:
     if len(approval_list) == 1:
         return redirect(url_for('patient_info', patient_id=approval_list[0]['patient_id']))
 
-    # if two or more patients have approved the relative, the html page will render.
     return render_template('select_patient.html', approval_list=approval_list)
 
 #----------------------------------------------------------------------#
 
 @app.route('/patient_information/<int:patient_id>')
 def patient_info(patient_id):
-    """
-    Displays a menu where you can choose to read the patient's profile,
-    look through their history of health reports,
-    or read their checkup history.
-    """
-    # Basic security gates - only the 'relative' user type can access this page:
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
@@ -648,13 +648,9 @@ def patient_info(patient_id):
         flash('Only approved relatives can view patient data with these settings.')
         return redirect(url_for('index'))
 
-    # if user has exactly one patient's approval, they should be able to return straight to dashboard:
     patient_approvals = RelativeApproval.query.filter_by(relative_id=session['user_id']).all()
-    only_approval = False
-    if len(patient_approvals) == 1:
-        only_approval = True
+    only_approval = len(patient_approvals) == 1
 
-    # pull the patient's name into the html page:
     patient = (
         db.session.query(PatientProfile)
         .join(RelativeApproval, RelativeApproval.patient_id == PatientProfile.user_id)
@@ -667,16 +663,12 @@ def patient_info(patient_id):
         'first_name': patient.first_name
     }
 
-    # you can access each part of the patient's record via the following html page:
     return render_template('patient_info.html', patient_dict=patient_dict, only_approval=only_approval)
 
 #----------------------------------------------------------------------#
 
 @app.route('/view_profile/<int:patient_id>')
 def view_profile(patient_id):
-    """
-    Allows relative to view basic information provided by the patient.
-    """
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
@@ -693,7 +685,6 @@ def view_profile(patient_id):
         flash("Unauthorized access.")
         return redirect(url_for('index'))
 
-    # query patient profile to get all rows of information about the patient:
     patient = (
         db.session.query(PatientProfile)
         .join(RelativeApproval, RelativeApproval.patient_id == PatientProfile.user_id)
@@ -704,12 +695,9 @@ def view_profile(patient_id):
 
 #----------------------------------------------------------------------#
 
+# display health data — relative view, with S2 sort support
 @app.route('/view_healthlog/<int:patient_id>', methods=['GET', 'POST'])
 def view_healthlog(patient_id):
-    """
-    Allows relative to view all health logs made by the patient themselves.
-    Functions as a calendar with a form that allows you to filter down to a specific date range.
-    """
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
@@ -726,48 +714,51 @@ def view_healthlog(patient_id):
         flash("Unauthorized access.")
         return redirect(url_for('index'))
 
-    # pull a date range from the form and use it to filter through health updates:
     form = CalendarForm()
 
-    # create default start and end dates to display the last week by default:
-    start = datetime.combine(date.today() - timedelta(days=7), datetime.min.time())
-    end = datetime.combine(date.today(), datetime.max.time())
+    start      = datetime.combine(date.today() - timedelta(days=7), datetime.min.time())
+    end        = datetime.combine(date.today(), datetime.max.time())
+    sort_by    = 'date'
+    sort_order = 'desc'
 
-    # submitting the form will change these dates:
     if form.validate_on_submit():
-        start = datetime.combine(form.start_date.data, datetime.min.time())
-        end = datetime.combine(form.end_date.data, datetime.max.time())
+        start      = datetime.combine(form.start_date.data, datetime.min.time())
+        end        = datetime.combine(form.end_date.data, datetime.max.time())
+        sort_by    = form.sort_by.data    or 'date'
+        sort_order = form.sort_order.data or 'desc'
         flash('Report successfully generated!')
 
-    # now pull data from within the date range:
-    healthlog = (
+    base_query = (
         db.session.query(HealthLog)
         .join(RelativeApproval, RelativeApproval.patient_id == HealthLog.patient_id)
         .filter(HealthLog.patient_id == patient_id)
         .filter(HealthLog.created_at >= start)
         .filter(HealthLog.created_at <= end)
-        .order_by(HealthLog.created_at.desc())
-        .all()
     )
 
-    # pull in the patient's profile too - just for their name:
+    healthlog = _apply_healthlog_sort(base_query, sort_by, sort_order).all()
+
     patient = (
         db.session.query(PatientProfile.first_name, PatientProfile.last_name)
         .join(RelativeApproval, RelativeApproval.patient_id == PatientProfile.user_id)
         .filter(PatientProfile.user_id == patient_id)
         .first()
     )
-    return render_template('view_healthlog.html', form=form, healthlog=healthlog, patient=patient,
-                           patient_id=patient_id)
+
+    return render_template(
+        'view_healthlog.html',
+        form=form,
+        healthlog=healthlog,
+        patient=patient,
+        patient_id=patient_id,
+        sort_by=sort_by,
+        sort_order=sort_order
+    )
 
 #----------------------------------------------------------------------#
 
 @app.route('/view_checkups/<int:patient_id>', methods=['GET', 'POST'])
 def view_checkups(patient_id):
-    """
-    Allows relative to view all health logs made by the patient themselves.
-    Functions as a calendar with a form that allows you to filter down to a specific date range.
-    """
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
@@ -784,20 +775,16 @@ def view_checkups(patient_id):
         flash("Unauthorized access.")
         return redirect(url_for('index'))
 
-    # pull a date range from the form and use it to filter through health updates:
     form = CalendarForm()
 
-    # create default start and end dates to display the last week by default:
     start = datetime.combine(date.today() - timedelta(days=7), datetime.min.time())
-    end = datetime.combine(date.today(), datetime.max.time())
+    end   = datetime.combine(date.today(), datetime.max.time())
 
-    # submitting the form will change these dates:
     if form.validate_on_submit():
         start = datetime.combine(form.start_date.data, datetime.min.time())
-        end = datetime.combine(form.end_date.data, datetime.max.time())
+        end   = datetime.combine(form.end_date.data, datetime.max.time())
         flash('Report successfully generated!')
 
-    # now pull data from within the date range:
     checkups = (
         db.session.query(Checkup)
         .join(RelativeApproval, RelativeApproval.patient_id == Checkup.patient_id)
@@ -808,7 +795,6 @@ def view_checkups(patient_id):
         .all()
     )
 
-    # pull in the patient's profile too - just for their name:
     patient = (
         db.session.query(PatientProfile.first_name, PatientProfile.last_name)
         .join(RelativeApproval, RelativeApproval.patient_id == PatientProfile.user_id)
